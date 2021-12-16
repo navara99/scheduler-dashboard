@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import classnames from "classnames";
 import Loading from "./Loading";
 import Panel from "./Panel";
+import axios from "axios";
 
 const data = [
   {
@@ -29,8 +30,11 @@ const data = [
 
 class Dashboard extends Component {
   state = {
-    loading: false,
-    focused: null
+    loading: true,
+    focused: null,
+    days: [],
+    interviewers: {},
+    appointments: {}
   };
 
   selectPanel = (id) => {
@@ -39,6 +43,19 @@ class Dashboard extends Component {
 
   componentDidMount() {
     const focused = JSON.parse(localStorage.getItem("focused"));
+
+    Promise.all([
+      axios.get("/api/days"),
+      axios.get("/api/appointments"),
+      axios.get("/api/interviewers")
+    ]).then(([days, appointments, interviewers]) => {
+      this.setState({
+        loading: false,
+        days: days.data,
+        appointments: appointments.data,
+        interviewers: interviewers.data
+      });
+    });
 
     if (focused) {
       this.setState({ focused });
@@ -62,7 +79,7 @@ class Dashboard extends Component {
         const { id, label, value } = panelData;
         return <Panel key={id} id={id} value={value} label={label} onSelect={() => this.selectPanel(id)} />;
       });
-
+     
     return (
       <main className={dashboardClasses} >{panels}</main>
     );
